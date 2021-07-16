@@ -26,24 +26,12 @@ from sklearn.feature_extraction.text import CountVectorizer
 import seaborn as sns
 from spacy import displacy
 from textblob import TextBlob
-
-# def progress_bar(my,v):
-#     my.progress(v)
 from IPython.core.display import display, HTML
-
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lex_rank import LexRankSummarizer
 
 
-# Function for Sumy Summarization
-def sumy_summarizer(docx):
-	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
-	lex_summarizer = LexRankSummarizer()
-	summary = lex_summarizer(parser.document,3)
-	summary_list = [str(sentence) for sentence in summary]
-	result = ' '.join(summary_list)
-	return result
 def tell_me_more():
     st.title('heres more')
 
@@ -210,6 +198,7 @@ st.set_page_config(
 #     df_locs = ['decals_{}.csv'.format(n) for n in range(4)]
 #     dfs = [pd.read_csv(df_loc) for df_loc in df_locs]
 #     return pd.concat(dfs)
+
 def text_analyzer(my_text):
     nlp = spacy.load('en_core_web_sm')
     docx = nlp(my_text)
@@ -392,32 +381,37 @@ if __name__ == '__main__':
     selected_model = st.sidebar.selectbox('', ['Novels'])#, 'Medical', 'Articles'])
     selected_option = st.sidebar.radio('Select', ["Type your text","Upload a text file"], index=0)
     # progress_bar(my_bar,10)
-
     if selected_option == "Type your text":
         st.subheader("Type Your Text")
         novel = st.text_area("","Type Here ...")
         # if st.button("Analyze"):
         #     nlp_result = text_analyzer(message)
         #     st.json(nlp_result)
-
+        # if st.button("Done"):
+        #     nlp = spacy.load('en_core_web_sm')
+        #     words = common_words('common_words.txt')
 	# Type your text
     if selected_option == "Upload a text file":
         selected_file = st.sidebar.file_uploader('Click on Browse files to upload ')
+        # selected_file.read().encode('utf-8').strip()
         if selected_file:
-            novel = str(selected_file.read(),"utf-8").replace('\r', ' ').replace('\n', ' ').replace("\'", "'")
+            novel = str(selected_file.read(),"latin1").replace('\r', ' ').replace('\n', ' ').replace("\'", "'")
+        # if st.sidebar.button("Done"):
+        #     # st.sidebar.markdown('### Select the number of Top Entities ')
+        #     # selected_topnum = st.sidebar.select_slider('Slide to select', options=[i for i in range(2,21)])
 
-        
-    if st.sidebar.button("Done"):    
+        #     # st.sidebar.markdown('### Select the threshhold of the intensity of the relationship ')
+        #     # select_thresh = st.sidebar.select_slider('Slide to select', options=[0.00001,0.0001,0.0005, 0.001, 0.005, 0.01])
+
+    nlp = spacy.load('en_core_web_sm')
+    words = common_words('common_words.txt')
+
+    st.sidebar.markdown('### Select the number of Top Entities ')
+    selected_topnum = st.sidebar.select_slider('Slide to select', options=[i for i in range(2,21)])
+
+    st.sidebar.markdown('### Select the threshhold of the intensity of the relationship ')
+    select_thresh = st.sidebar.select_slider('Slide to select', options=[0.00001,0.0001,0.0005, 0.001, 0.005, 0.01])
     
-        st.sidebar.markdown('### Select the number of Top Entities ')
-        selected_topnum = st.sidebar.select_slider('Slide to select', options=[i for i in range(2,21)])
-
-        st.sidebar.markdown('### Select the threshhold of the intensity of the relationship ')
-        select_thresh = st.sidebar.select_slider('Slide to select', options=[0.00001,0.0001,0.0005, 0.001, 0.005, 0.01])
-
-        nlp = spacy.load('en_core_web_sm')
-        words = common_words('common_words.txt')
-
 
 
     if st.checkbox("Show Tokens and Lemma"):
@@ -492,4 +486,4 @@ if __name__ == '__main__':
 
 
     # main(novel, options_selected)
-    
+
