@@ -15,6 +15,7 @@ import codecs
 import os
 import spacy
 import json
+import plotly
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -32,14 +33,14 @@ from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lex_rank import LexRankSummarizer
 
 
-def tell_me_more():
-    st.title('heres more')
+# def tell_me_more():
+#     st.title('heres more')
 
-    st.button('Back to NER')  # will change state and hence trigger rerun and hence reset should_tell_me_more
+#     st.button('Back to NER')  # will change state and hence trigger rerun and hence reset should_tell_me_more
 
     
 
-    st.button('Back to NER', key='back_again')  # will change state and hence trigger rerun and hence reset should_tell_me_more
+#     st.button('Back to NER', key='back_again')  # will change state and hence trigger rerun and hence reset should_tell_me_more
 
 
 def interactive_widgets():
@@ -217,8 +218,16 @@ def entity_analyzer(my_text):
     # st.write(HTML(displacy.render(docx, style="ent")))
     tokens = [ token.text for token in docx]
     entities = [(entity.text,entity.label_)for entity in docx.ents]
-    allData = ['"Token":{},\n"Entities":{}'.format(tokens,entities)]
+    allData = ['"Entities":{}'.format(entities)]
     return allData
+
+def sumy_summarizer(docx):
+	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
+	lex_summarizer = LexRankSummarizer()
+	summary = lex_summarizer(parser.document,3)
+	summary_list = [str(sentence) for sentence in summary]
+	result = ' '.join(summary_list)
+	return result
 
 def flatten(input_list):
     flat_list = []
@@ -320,12 +329,12 @@ def matrix_to_edge_list(matrix, mode, name_list):
 
     return edge_list
 
-def plot_graph(name_list, name_frequency, matrix, plt_name, mode, path=''):
+def plot_graph(name_list, name_frequency, matrix, mode):
     label = {i: i for i in name_list}
     edge_list = matrix_to_edge_list(matrix, mode, name_list)
     normalized_frequency = np.array(name_frequency) / np.max(name_frequency)
 
-    plt.figure(figsize=(20, 20))
+    fig = plt.figure(figsize=(8, 6))
     G = nx.Graph()
     G.add_nodes_from(name_list)
     G.add_edges_from(edge_list)
@@ -344,7 +353,9 @@ def plot_graph(name_list, name_frequency, matrix, plt_name, mode, path=''):
     else:
         raise ValueError("mode should be either 'co-occurrence' or 'sentiment'")
 
-    plt.savefig(path + plt_name + '.png')
+    # plt.savefig(path + plt_name + '.png')
+
+    st.plotly_chart(fig)
 
 def ARI(novel, words, sentences):
     char  = len(novel)
@@ -366,16 +377,23 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.CRITICAL)
 
     st.title('Named Entity Relationships')
-    st.subheader('by Abhi, jiss,sagar and tirumala sir')
-    st.spinner()
+    st.subheader('Course Name: Natural Language Processing\n \
+    Course Code: 19AI705\n \
+    Course Instructor: Manu Madhavan\n \
+    Group Number: 06\n \
+    Members:\n \
+    \tAbhishek Gopinath Kovath [CB.EN.P2AID20002]\n\
+    \tJiss Joseph Thomas [CB.EN.P2AID20024]\n\
+    \tPY Sagar [CB.EN.P2AID20036]\n\
+    \tTirumala K [CB.EN.D*CSE20014-PT]')
     # st.balloons()
-    should_tell_me_more = st.button('Tell me more')
-    if should_tell_me_more:
-        tell_me_more()
-        st.markdown('---')
-    else:
-        st.markdown('---')
-        interactive_widgets()
+    # should_tell_me_more = st.button('Tell me more')
+    # if should_tell_me_more:
+    #     tell_me_more()
+    #     st.markdown('---')
+    # else:
+    #     st.markdown('---')
+    #     interactive_widgets()
 
     st.sidebar.markdown("### Select the type")
     selected_model = st.sidebar.selectbox('', ['Novels'])#, 'Medical', 'Articles'])
@@ -474,15 +492,19 @@ if __name__ == '__main__':
             st.bar_chart(hist_values)
             if st.checkbox("Show priliminary name list"):
                 preliminary_name_list = iterative_NER(sentence_list, threshold_rate = select_thresh)
+                st.success(preliminary_name_list)
                 if st.checkbox("Show top names frequency"):
                     name_frequency, name_list = top_names(preliminary_name_list, novel, selected_topnum)
+                    st.success(name_frequency)
+                    st.success(name_list)
                     cooccurrence_matrix, sentiment_matrix = calculate_matrix(name_list, sentence_list, align_rate)
 
                     if st.checkbox("Show cooccurance graph"):
-                        options_selected['Show_cooccurance']=True
+                        plot_graph(name_list, name_frequency, cooccurrence_matrix ,'co-occurrence')
 
                     if st.checkbox("Show sentiment graph"):
-                        options_selected['Show_senti']=True
+                        plot_graph(name_list, name_frequency, sentiment_matrix, 'sentiment')
+
 
 
     # main(novel, options_selected)
